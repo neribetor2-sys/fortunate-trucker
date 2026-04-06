@@ -47,9 +47,6 @@
     .modal { background: #fff; width: 100%; max-width: 500px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; }
     input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; }
     .btn-save { background: var(--primary); color: #fff; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
-    th, td { padding: 12px; text-align: right; border-bottom: 1px solid var(--border); }
-    th { background: var(--primary); color: #fff; }
     #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 20px; display: none; z-index: 2000; }
     #toast.show { display: block; }
   </style>
@@ -60,8 +57,7 @@
   <h1>דירה חדשה 🏠</h1>
   <nav>
     <button class="nav-btn active" data-tab="dashboard">לוח בקרה</button>
-    <button class="nav-btn" data-tab="items">פריטים</button>
-    <button class="nav-btn" data-tab="measurements">מידות</button>
+    <button class="nav-btn" data-tab="items">רשימת פריטים</button>
   </nav>
 </header>
 
@@ -86,21 +82,19 @@
     </div>
     <div style="display:flex; gap:10px; margin-bottom:15px;">
         <select id="filter-status"><option value="">כל הסטטוסים</option><option>לקנייה</option><option>הוזמן</option><option>סופק</option></select>
-        <select id="filter-room"><option value="">כל החדרים</option><option>סלון</option><option>חדר שינה</option><option>מטבח</option><option>משרד</option></select>
+        <select id="filter-room">
+          <option value="">כל החדרים</option>
+          <option>מרפסת</option>
+          <option>חדר שינה</option>
+          <option>מטבח</option>
+          <option>סלון</option>
+          <option>משרד</option>
+          <option>חדר שירותים מאסטר</option>
+          <option>חדר שירותים נפרד</option>
+        </select>
     </div>
     <div class="cards-grid" id="items-grid"></div>
     <div id="items-empty" style="text-align:center; padding:40px; display:none;">עוד לא הוספתם פריטים...</div>
-  </div>
-
-  <div class="tab-pane" id="tab-measurements">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2>מידות הדירה</h2>
-        <button class="btn-save" style="width:auto;" onclick="openMeasModal()">+ הוסף מידה</button>
-    </div>
-    <table>
-        <thead><tr><th>שם</th><th>אורך</th><th>רוחב</th><th>גובה</th><th>פעולות</th></tr></thead>
-        <tbody id="meas-tbody"></tbody>
-    </table>
   </div>
 </main>
 
@@ -108,7 +102,15 @@
     <div class="modal">
         <h3>פרטי פריט</h3>
         <input type="text" id="f-title" placeholder="שם הפריט (למשל: ספה)" />
-        <select id="f-room"><option>סלון</option><option>חדר שינה</option><option>מטבח</option><option>משרד</option><option>מסדרון</option></select>
+        <select id="f-room">
+          <option>מרפסת</option>
+          <option>חדר שינה</option>
+          <option>מטבח</option>
+          <option>סלון</option>
+          <option>משרד</option>
+          <option>חדר שירותים מאסטר</option>
+          <option>חדר שירותים נפרד</option>
+        </select>
         <select id="f-status"><option>לקנייה</option><option>הוזמן</option><option>סופק</option></select>
         <select id="f-priority"><option>חייב להיות</option><option>נחמד לקבל</option></select>
         <input type="number" id="f-est-price" placeholder="מחיר משוער" />
@@ -118,18 +120,6 @@
         <textarea id="f-notes" placeholder="הערות..."></textarea>
         <button class="btn-save" onclick="saveItem()">שמור פריט</button>
         <button class="btn-delete" style="width:100%; margin-top:5px;" onclick="closeItemModal()">ביטול</button>
-    </div>
-</div>
-
-<div class="modal-overlay" id="meas-modal-overlay">
-    <div class="modal">
-        <h3>הוסף מידה</h3>
-        <input type="text" id="m-name" placeholder="שם הקיר/האזור" />
-        <input type="number" id="m-length" placeholder="אורך (ס״מ)" />
-        <input type="number" id="m-width" placeholder="רוחב (ס״מ)" />
-        <input type="number" id="m-height" placeholder="גובה (ס״מ)" />
-        <button class="btn-save" onclick="saveMeasurement()">שמור מידה</button>
-        <button class="btn-delete" style="width:100%; margin-top:5px;" onclick="closeMeasModal()">ביטול</button>
     </div>
 </div>
 
@@ -153,7 +143,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let items = [];
-let measurements = [];
 let editingItemId = null;
 
 // LISTENERS
@@ -161,11 +150,6 @@ db.collection("items").onSnapshot(snap => {
     items = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
     renderItems();
     renderDashboard();
-});
-
-db.collection("measurements").onSnapshot(snap => {
-    measurements = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-    renderMeasurements();
 });
 
 // FUNCTIONS
@@ -176,7 +160,7 @@ function renderDashboard() {
     const spent = items.reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
     const neri = items.filter(i => i.payer === 'neri').reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
     const noa = items.filter(i => i.payer === 'noa').reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
-    
+
     document.getElementById('stat-purchased').textContent = purchased;
     document.getElementById('stat-total').textContent = items.length;
     document.getElementById('stat-spent').textContent = fmtPrice(spent);
@@ -188,7 +172,7 @@ function renderItems() {
     const grid = document.getElementById('items-grid');
     const fs = document.getElementById('filter-status').value;
     const fr = document.getElementById('filter-room').value;
-    
+
     const filtered = items.filter(i => (!fs || i.status === fs) && (!fr || i.room === fr));
     grid.innerHTML = filtered.map(i => `
         <div class="item-card">
@@ -204,13 +188,6 @@ function renderItems() {
                 <button class="btn-delete" onclick="deleteItem('${i.id}')">מחק</button>
             </div>
         </div>
-    `).join('');
-}
-
-function renderMeasurements() {
-    document.getElementById('meas-tbody').innerHTML = measurements.map(m => `
-        <tr><td>${m.name}</td><td>${m.length}</td><td>${m.width}</td><td>${m.height}</td>
-        <td><button class="btn-delete" onclick="deleteMeas('${m.id}')">מחק</button></td></tr>
     `).join('');
 }
 
@@ -230,18 +207,6 @@ async function saveItem() {
 }
 
 async function deleteItem(id) { if(confirm('למחוק?')) await db.collection("items").doc(id).delete(); }
-async function deleteMeas(id) { if(confirm('למחוק?')) await db.collection("measurements").doc(id).delete(); }
-
-async function saveMeasurement() {
-    const id = Math.random().toString(36).substr(2, 9);
-    await db.collection("measurements").doc(id).set({
-        name: document.getElementById('m-name').value,
-        length: document.getElementById('m-length').value,
-        width: document.getElementById('m-width').value,
-        height: document.getElementById('m-height').value
-    });
-    closeMeasModal();
-}
 
 // UI HELPERS
 function openItemModal(id) {
@@ -250,12 +215,10 @@ function openItemModal(id) {
         const i = items.find(x => x.id === id);
         document.getElementById('f-title').value = i.title || '';
         document.getElementById('f-act-price').value = i.actualPrice || '';
-    } else { document.getElementById('item-form')?.reset(); }
+    } else { document.getElementById('item-modal-overlay').querySelector('form')?.reset(); }
     document.getElementById('item-modal-overlay').classList.add('open');
 }
 function closeItemModal() { document.getElementById('item-modal-overlay').classList.remove('open'); }
-function openMeasModal() { document.getElementById('meas-modal-overlay').classList.add('open'); }
-function closeMeasModal() { document.getElementById('meas-modal-overlay').classList.remove('open'); }
 
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
