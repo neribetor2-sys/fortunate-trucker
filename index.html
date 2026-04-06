@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>דירה חדשה 🏠</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #0d9488;
+      --primary-dark: #0f766e;
+      --primary-light: #ccfbf1;
+      --secondary: #0ea5e9;
+      --bg: #f0fdf9;
+      --surface: #ffffff;
+      --surface2: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --warning: #f97316;
+      --warning-light: #ffedd5;
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --blue: #3b82f6;
+      --blue-light: #dbeafe;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.05);
+      --shadow-lg: 0 8px 30px rgba(0,0,0,.12);
+      --transition: .18s ease;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+    }
+
+    /* ── HEADER ── */
+    #app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+    }
+    .header-top h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      letter-spacing: -.3px;
+    }
+    nav {
+      display: flex;
+      gap: 4px;
+      padding: 0 16px 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    nav::-webkit-scrollbar { display: none; }
+    .nav-btn {
+      flex-shrink: 0;
+      padding: 7px 16px;
+      border: none;
+      border-radius: 20px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: .9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+    .nav-btn:hover { background: var(--primary-light); color: var(--primary-dark); }
+    .nav-btn.active { background: var(--primary); color: #fff; }
+
+    /* ── MAIN ── */
+    main { padding: 20px 16px 80px; max-width: 1200px; margin: 0 auto; }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── DASHBOARD ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media(min-width:600px) { .stats-grid { grid-template-columns: repeat(4,1fr); } }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border-top: 3px solid var(--primary);
+    }
+    .stat-card.orange { border-top-color: var(--warning); }
+    .stat-card.green  { border-top-color: var(--success); }
+    .stat-card.blue   { border-top-color: var(--blue); }
+    .stat-label { font-size: .75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+    .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--text); }
+
+    .progress-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .progress-label { font-weight: 600; font-size: .95rem; }
+    .progress-pct { font-size: .85rem; color: var(--primary); font-weight: 700; }
+    .progress-bar-bg {
+      height: 10px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(270deg, var(--primary), var(--secondary));
+      border-radius: 99px;
+      transition: width .5s ease;
+    }
+
+    .spending-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .spending-card h3 { font-size: .95rem; font-weight: 600; margin-bottom: 14px; color: var(--text-muted); }
+    .spending-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .spending-row:last-child { border-bottom: none; }
+    .spending-name { font-weight: 500; }
+    .spending-amount { font-weight: 700; color: var(--primary-dark); font-size: 1.05rem; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      position: sticky;
+      top: 100px;
+      z-index: 50;
+      background: var(--bg);
+      padding: 10px 0;
+      margin-bottom: 16px;
+    }
+    .filter-inner {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .filter-inner label { font-size: .8rem; color: var(--text-muted); font-weight: 500; }
+    .filter-select {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      font-size: .85rem;
+      font-family: inherit;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .btn-clear-filters {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      font-size: .82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .btn-clear-filters:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+
+    /* ── ADD BUTTON ── */
+    .items-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .items-header h2 { font-size: 1.1rem; font-weight: 700; }
+    .btn-add {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+      box-shadow: 0 2px 8px rgba(13,148,136,.3);
+    }
+    .btn-add:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-add:active { transform: translateY(0); }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media(min-width:640px) { .cards-grid { grid-template-columns: 1fr 1fr; } }
+    @media(min-width:960px) { .cards-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+    .item-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: transform var(--transition), box-shadow var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+    .item-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+    .card-img {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      background: var(--surface2);
+      display: block;
+    }
+    .card-img-placeholder {
+      width: 100%;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary-light), #e0f2fe);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: var(--primary);
+    }
+
+    .card-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .card-title { font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      padding: 3px 9px;
+      border-radius: 99px;
+      font-size: .72rem;
+      font-weight: 600;
+    }
+    .tag-room    { background: #ede9fe; color: #6d28d9; }
+    .tag-status-לקנייה  { background: var(--blue-light); color: var(--blue); }
+    .tag-status-הוזמן   { background: var(--warning-light); color: var(--warning); }
+    .tag-status-סופק    { background: var(--success-light); color: #15803d; }
+    .tag-priority-חייב  { background: var(--danger-light); color: var(--danger); }
+    .tag-priority-נחמד  { background: #f1f5f9; color: var(--text-muted); }
+
+    .card-row { font-size: .82rem; color: var(--text-muted); display: flex; gap: 4px; align-items: flex-start; }
+    .card-row b { color: var(--text); font-weight: 600; }
+
+    .card-financials {
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: .82rem;
+    }
+    .price-actual { font-weight: 700; color: var(--primary-dark); font-size: .95rem; }
+    .price-estimated { color: var(--text-muted); }
+
+    .card-notes {
+      font-size: .8rem;
+      color: var(--text-muted);
+      font-style: italic;
+      border-right: 2px solid var(--primary-light);
+      padding-right: 8px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px 14px;
+    }
+    .btn-edit, .btn-delete {
+      flex: 1;
+      padding: 7px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .btn-edit   { background: var(--primary-light); color: var(--primary-dark); }
+    .btn-delete { background: var(--danger-light); color: var(--danger); }
+    .btn-edit:hover   { background: var(--primary); color: #fff; }
+    .btn-delete:hover { background: var(--danger); color: #fff; }
+
+    .card-link a { color: var(--primary); font-size: .8rem; text-decoration: none; }
+    .card-link a:hover { text-decoration: underline; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 3.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: .95rem; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 200;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 16px;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 600px;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(20px);
+      transition: transform .25s ease;
+      margin: auto;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { font-size: 1.1rem; font-weight: 700; }
+    .btn-close {
+      width: 32px; height: 32px;
+      border: none; background: var(--surface2);
+      border-radius: 50%; cursor: pointer;
+      font-size: 1.1rem; line-height: 1;
+      color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .btn-close:hover { background: var(--danger-light); color: var(--danger); }
+
+    .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media(min-width:480px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1/-1; }
+    .form-group label { font-size: .82rem; font-weight: 600; color: var(--text-muted); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 9px 11px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: .9rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface2);
+      transition: border-color var(--transition);
+      direction: rtl;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+    }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+    .dims-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .dims-row input { padding: 9px 8px; }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-start;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-save {
+      padding: 10px 28px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .btn-save:hover { background: var(--primary-dark); }
+    .btn-cancel {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: .9rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+    .btn-cancel:hover { background: var(--surface2); }
+
+    /* ── MEASUREMENTS ── */
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-header h2 { font-size: 1.1rem; font-weight: 700; }
+
+    .meas-table-wrap { overflow-x: auto; border-radius: var(--radius); box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); }
+    th {
+      background: var(--primary);
+      color: #fff;
+      padding: 11px 14px;
+      font-size: .82rem;
+      font-weight: 600;
+      text-align: right;
+      white-space: nowrap;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: .88rem;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .btn-sm {
+      padding: 4px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .btn-sm-edit   { background: var(--primary-light); color: var(--primary-dark); margin-right: 5px; }
+    .btn-sm-delete { background: var(--danger-light); color: var(--danger); }
+    .btn-sm-edit:hover   { background: var(--primary); color: #fff; }
+    .btn-sm-delete:hover { background: var(--danger); color: #fff; }
+
+    /* ── SUGGESTIONS ── */
+    .suggestions-intro {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      color: var(--text-muted);
+      font-size: .9rem;
+      border-right: 4px solid var(--primary);
+    }
+
+    .room-section { margin-bottom: 24px; }
+    .room-section h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .room-section h3::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 18px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .sugg-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media(min-width:600px) { .sugg-cards { grid-template-columns: repeat(3,1fr); } }
+    @media(min-width:900px) { .sugg-cards { grid-template-columns: repeat(4,1fr); } }
+
+    .sugg-card {
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 1.5px solid transparent;
+      transition: var(--transition);
+    }
+    .sugg-card:hover { border-color: var(--primary); }
+    .sugg-name { font-weight: 700; font-size: .88rem; }
+    .sugg-price { color: var(--primary-dark); font-size: .82rem; font-weight: 600; }
+    .sugg-priority { font-size: .72rem; color: var(--text-muted); }
+    .btn-add-sugg {
+      margin-top: 4px;
+      padding: 6px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: none;
+      border-radius: 6px;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .btn-add-sugg:hover { background: var(--primary); color: #fff; }
+    .btn-add-sugg:disabled { background: var(--success-light); color: #15803d; cursor: default; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 99px;
+      font-size: .88rem;
+      font-weight: 500;
+      z-index: 500;
+      transition: transform .3s ease, opacity .3s ease;
+      opacity: 0;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── CONFIRM DIALOG ── */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .confirm-overlay.open { opacity: 1; pointer-events: all; }
+    .confirm-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 340px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    .confirm-box p { font-size: .95rem; margin-bottom: 18px; line-height: 1.5; }
+    .confirm-box .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-confirm-yes { padding: 9px 24px; background: var(--danger); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; font-size: .9rem; }
+    .btn-confirm-no  { padding: 9px 24px; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-family: inherit; font-size: .9rem; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="app-header">
+  <div class="header-top">
+    <h1>דירה חדשה 🏠</h1>
+  </div>
+  <nav>
+    <button class="nav-btn active" data-tab="dashboard">לוח בקרה</button>
+    <button class="nav-btn" data-tab="items">פריטים</button>
+    <button class="nav-btn" data-tab="measurements">מידות דירה</button>
+    <button class="nav-btn" data-tab="suggestions">הצעות</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ════ TAB: DASHBOARD ════ -->
+  <div class="tab-pane active" id="tab-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">פריטים שנקנו</div>
+        <div class="stat-value" id="stat-purchased">0</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">סה״כ פריטים</div>
+        <div class="stat-value" id="stat-total">0</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">הוצאות עד כה</div>
+        <div class="stat-value" id="stat-spent">0 ₪</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">צפי להשלמה</div>
+        <div class="stat-value" id="stat-projected">0 ₪</div>
+      </div>
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-header">
+        <span class="progress-label" id="progress-text">נקנו 0 מתוך 0 פריטים</span>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="spending-card">
+      <h3>פירוט הוצאות לפי משלם</h3>
+      <div class="spending-row">
+        <span class="spending-name">💰 neri שילם</span>
+        <span class="spending-amount" id="spend-neri">0 ₪</span>
+      </div>
+      <div class="spending-row">
+        <span class="spending-name">💰 noa שילמה</span>
+        <span class="spending-amount" id="spend-noa">0 ₪</span>
+      </div>
+      <div class="spending-row">
+        <span class="spending-name">🤝 משותף</span>
+        <span class="spending-amount" id="spend-shared">0 ₪</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ TAB: ITEMS ════ -->
+  <div class="tab-pane" id="tab-items">
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <div class="filter-inner">
+        <label>סטטוס:</label>
+        <select class="filter-select" id="filter-status">
+          <option value="">הכל</option>
+          <option value="לקנייה">לקנייה</option>
+          <option value="הוזמן">הוזמן</option>
+          <option value="סופק">סופק</option>
+        </select>
+        <label>חדר:</label>
+        <select class="filter-select" id="filter-room">
+          <option value="">הכל</option>
+          <option>חדר שינה</option>
+          <option>משרד</option>
+          <option>חדר אמבטיה ראשי</option>
+          <option>חדר אמבטיה שני</option>
+          <option>מסדרון</option>
+          <option>סלון</option>
+          <option>מרפסת</option>
+          <option>מטבח</option>
+        </select>
+        <label>משלם:</label>
+        <select class="filter-select" id="filter-payer">
+          <option value="">הכל</option>
+          <option>neri</option>
+          <option>noa</option>
+          <option>משותף</option>
+        </select>
+        <button class="btn-clear-filters" onclick="clearFilters()">נקה סינון</button>
+      </div>
+    </div>
+
+    <div class="items-header">
+      <h2 id="items-count-label">כל הפריטים</h2>
+      <button class="btn-add" onclick="openItemModal()">+ הוסף פריט</button>
+    </div>
+
+    <div class="cards-grid" id="items-grid">
+      <!-- cards injected here -->
+    </div>
+
+    <div class="empty-state" id="items-empty" style="display:none">
+      <div class="icon">🛋️</div>
+      <p>אין פריטים עדיין. לחץ על "הוסף פריט" כדי להתחיל!</p>
+    </div>
+  </div>
+
+  <!-- ════ TAB: MEASUREMENTS ════ -->
+  <div class="tab-pane" id="tab-measurements">
+    <div class="section-header">
+      <h2>מידות דירה</h2>
+      <button class="btn-add" onclick="openMeasModal()">+ הוסף מידה</button>
+    </div>
+
+    <div class="meas-table-wrap">
+      <table id="meas-table">
+        <thead>
+          <tr>
+            <th>שם / תיאור</th>
+            <th>אורך (ס״מ)</th>
+            <th>רוחב (ס״מ)</th>
+            <th>גובה (ס״מ)</th>
+            <th>הערות</th>
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody id="meas-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="empty-state" id="meas-empty" style="display:none">
+      <div class="icon">📐</div>
+      <p>אין מידות שמורות עדיין.</p>
+    </div>
+  </div>
+
+  <!-- ════ TAB: SUGGESTIONS ════ -->
+  <div class="tab-pane" id="tab-suggestions">
+    <div class="suggestions-intro">
+      לחץ על "הוסף לרשימה" כדי להוסיף פריט מוצע ישירות לרשימת הקנייה שלך.
+    </div>
+    <div id="suggestions-container"></div>
+  </div>
+
+</main>
+
+<!-- ══ ITEM MODAL ══ -->
+<div class="modal-overlay" id="item-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="item-modal-title">הוסף פריט חדש</h2>
+      <button class="btn-close" onclick="closeItemModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="item-form" class="form-grid">
+        <div class="form-group full">
+          <label>כותרת *</label>
+          <input type="text" id="f-title" placeholder="שם הפריט" required />
+        </div>
+        <div class="form-group">
+          <label>חדר</label>
+          <select id="f-room">
+            <option value="">בחר חדר...</option>
+            <option>חדר שינה</option>
+            <option>משרד</option>
+            <option>חדר אמבטיה ראשי</option>
+            <option>חדר אמבטיה שני</option>
+            <option>מסדרון</option>
+            <option>סלון</option>
+            <option>מרפסת</option>
+            <option>מטבח</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>עדיפות</label>
+          <select id="f-priority">
+            <option value="">בחר עדיפות...</option>
+            <option>חייב להיות</option>
+            <option>נחמד לקבל</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>מידות (ס״מ): אורך / רוחב / גובה</label>
+          <div class="dims-row">
+            <input type="number" id="f-length" placeholder="אורך" min="0" />
+            <input type="number" id="f-width"  placeholder="רוחב" min="0" />
+            <input type="number" id="f-height" placeholder="גובה" min="0" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>מחיר משוער (₪)</label>
+          <input type="number" id="f-est-price" placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label>מחיר בפועל (₪)</label>
+          <input type="number" id="f-act-price" placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label>מי שילם</label>
+          <select id="f-payer">
+            <option value="">בחר...</option>
+            <option>neri</option>
+            <option>noa</option>
+            <option>משותף</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>סטטוס</label>
+          <select id="f-status">
+            <option value="">בחר סטטוס...</option>
+            <option>לקנייה</option>
+            <option>הוזמן</option>
+            <option>סופק</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>קישור לחנות</label>
+          <input type="url" id="f-link" placeholder="https://..." />
+        </div>
+        <div class="form-group full">
+          <label>כתובת תמונה (URL)</label>
+          <input type="url" id="f-image" placeholder="https://..." />
+        </div>
+        <div class="form-group">
+          <label>תאריך אספקה</label>
+          <input type="date" id="f-delivery" />
+        </div>
+        <div class="form-group full">
+          <label>הערות</label>
+          <textarea id="f-notes" placeholder="הערות נוספות..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-save" onclick="saveItem()">שמור</button>
+      <button class="btn-cancel" onclick="closeItemModal()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEASUREMENT MODAL ══ -->
+<div class="modal-overlay" id="meas-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="meas-modal-title">הוסף מידה</h2>
+      <button class="btn-close" onclick="closeMeasModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="meas-form" class="form-grid">
+        <div class="form-group full">
+          <label>שם / תיאור *</label>
+          <input type="text" id="m-name" placeholder='למשל: "קיר סלון ראשי"' required />
+        </div>
+        <div class="form-group">
+          <label>אורך (ס״מ)</label>
+          <input type="number" id="m-length" placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label>רוחב (ס״מ)</label>
+          <input type="number" id="m-width"  placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label>גובה (ס״מ)</label>
+          <input type="number" id="m-height" placeholder="0" min="0" />
+        </div>
+        <div class="form-group full">
+          <label>הערות</label>
+          <textarea id="m-notes" placeholder="הערות..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-save" onclick="saveMeasurement()">שמור</button>
+      <button class="btn-cancel" onclick="closeMeasModal()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM DIALOG ══ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <p id="confirm-msg">האם אתה בטוח שברצונך למחוק?</p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-yes" id="confirm-yes">מחק</button>
+      <button class="btn-confirm-no"  onclick="closeConfirm()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════
+//  DATA LAYER
+// ═══════════════════════════════════
+let items = [];
+let measurements = [];
+let editingItemId = null;
+let editingMeasId = null;
+
+function loadData() {
+  try { items = JSON.parse(localStorage.getItem('furniture_items') || '[]'); } catch(e) { items = []; }
+  try { measurements = JSON.parse(localStorage.getItem('apartment_measurements') || '[]'); } catch(e) { measurements = []; }
+}
+
+function saveItems() {
+  localStorage.setItem('furniture_items', JSON.stringify(items));
+}
+function saveMeasurements() {
+  localStorage.setItem('apartment_measurements', JSON.stringify(measurements));
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+// ═══════════════════════════════════
+//  FORMATTING
+// ═══════════════════════════════════
+function fmtPrice(n) {
+  if (n === '' || n === null || n === undefined || isNaN(n)) return null;
+  return Number(n).toLocaleString('he-IL') + ' ₪';
+}
+
+function fmtDate(iso) {
+  if (!iso) return null;
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ═══════════════════════════════════
+//  TABS
+// ═══════════════════════════════════
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'dashboard') renderDashboard();
+    if (btn.dataset.tab === 'items') renderItems();
+    if (btn.dataset.tab === 'measurements') renderMeasurements();
+    if (btn.dataset.tab === 'suggestions') renderSuggestions();
+  });
+});
+
+// ═══════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════
+function renderDashboard() {
+  const total = items.length;
+  const purchased = items.filter(i => i.status === 'סופק').length;
+  const pct = total > 0 ? Math.round(purchased / total * 100) : 0;
+
+  const runningCost = items
+    .filter(i => i.status === 'הוזמן' || i.status === 'סופק')
+    .reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
+
+  const projectedCost = items
+    .filter(i => i.status === 'לקנייה')
+    .reduce((s, i) => s + (parseFloat(i.estPrice) || 0), 0);
+
+  const spendNeri = items
+    .filter(i => (i.status === 'הוזמן' || i.status === 'סופק') && i.payer === 'neri' && i.actualPrice)
+    .reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
+
+  const spendNoa = items
+    .filter(i => (i.status === 'הוזמן' || i.status === 'סופק') && i.payer === 'noa' && i.actualPrice)
+    .reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
+
+  const spendShared = items
+    .filter(i => (i.status === 'הוזמן' || i.status === 'סופק') && i.payer === 'משותף' && i.actualPrice)
+    .reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
+
+  document.getElementById('stat-purchased').textContent = purchased;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-spent').textContent = fmtPrice(runningCost) || '0 ₪';
+  document.getElementById('stat-projected').textContent = fmtPrice(projectedCost) || '0 ₪';
+  document.getElementById('progress-text').textContent = `נקנו ${purchased} מתוך ${total} פריטים`;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('spend-neri').textContent = fmtPrice(spendNeri) || '0 ₪';
+  document.getElementById('spend-noa').textContent = fmtPrice(spendNoa) || '0 ₪';
+  document.getElementById('spend-shared').textContent = fmtPrice(spendShared) || '0 ₪';
+}
+
+// ═══════════════════════════════════
+//  ITEMS
+// ═══════════════════════════════════
+function getFilteredItems() {
+  const fs = document.getElementById('filter-status').value;
+  const fr = document.getElementById('filter-room').value;
+  const fp = document.getElementById('filter-payer').value;
+  return items.filter(i => {
+    if (fs && i.status !== fs) return false;
+    if (fr && i.room !== fr) return false;
+    if (fp && i.payer !== fp) return false;
+    return true;
+  });
+}
+
+document.getElementById('filter-status').addEventListener('change', renderItems);
+document.getElementById('filter-room').addEventListener('change', renderItems);
+document.getElementById('filter-payer').addEventListener('change', renderItems);
+
+function clearFilters() {
+  document.getElementById('filter-status').value = '';
+  document.getElementById('filter-room').value = '';
+  document.getElementById('filter-payer').value = '';
+  renderItems();
+}
+
+function renderItems() {
+  const filtered = getFilteredItems();
+  const grid = document.getElementById('items-grid');
+  const empty = document.getElementById('items-empty');
+  const label = document.getElementById('items-count-label');
+
+  label.textContent = `${filtered.length} פריטים`;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = filtered.map(item => buildCard(item)).join('');
+}
+
+function buildCard(item) {
+  const statusClass = {
+    'לקנייה': 'tag-status-לקנייה',
+    'הוזמן':  'tag-status-הוזמן',
+    'סופק':   'tag-status-סופק'
+  }[item.status] || '';
+
+  const priorityClass = item.priority === 'חייב להיות' ? 'tag-priority-חייב' : 'tag-priority-נחמד';
+  const priorityText  = item.priority === 'חייב להיות' ? 'חייב להיות' : item.priority ? 'נחמד לקבל' : '';
+
+  const imgHtml = item.imageUrl
+    ? `<img class="card-img" src="${escHtml(item.imageUrl)}" alt="${escHtml(item.title)}" onerror="this.style.display='none'" loading="lazy" />`
+    : `<div class="card-img-placeholder">🛋️</div>`;
+
+  const dims = (item.length || item.width || item.height)
+    ? `<div class="card-row"><b>מידות:</b>&nbsp;${item.length||'?'} × ${item.width||'?'} × ${item.height||'?'} ס״מ</div>`
+    : '';
+
+  const actP = parseFloat(item.actualPrice);
+  const estP = parseFloat(item.estPrice);
+  let priceHtml = '';
+  if (!isNaN(actP) && actP > 0) {
+    priceHtml = `<span class="price-actual">${fmtPrice(actP)}</span>`;
+    if (!isNaN(estP) && estP > 0) priceHtml += ` <span class="price-estimated">(משוער: ${fmtPrice(estP)})</span>`;
+  } else if (!isNaN(estP) && estP > 0) {
+    priceHtml = `<span class="price-estimated">משוער: ${fmtPrice(estP)}</span>`;
+  }
+
+  const payerDelivery = [
+    item.payer ? `שולם ע״י: <b>${escHtml(item.payer)}</b>` : '',
+    item.deliveryDate ? `תאריך אספקה: <b>${fmtDate(item.deliveryDate)}</b>` : ''
+  ].filter(Boolean).join(' | ');
+
+  const notesHtml = item.notes
+    ? `<div class="card-notes">${escHtml(item.notes)}</div>` : '';
+
+  const linkHtml = item.storeLink
+    ? `<div class="card-link"><a href="${escHtml(item.storeLink)}" target="_blank" rel="noopener">🔗 קישור לחנות</a></div>` : '';
+
+  return `
+    <div class="item-card">
+      ${imgHtml}
+      <div class="card-body">
+        <div class="card-title">${escHtml(item.title)}</div>
+        <div class="tags">
+          ${item.room     ? `<span class="tag tag-room">${escHtml(item.room)}</span>` : ''}
+          ${item.status   ? `<span class="tag ${statusClass}">${escHtml(item.status)}</span>` : ''}
+          ${priorityText  ? `<span class="tag ${priorityClass}">${escHtml(priorityText)}</span>` : ''}
+        </div>
+        ${dims}
+        ${priceHtml ? `<div class="card-financials">${priceHtml}</div>` : ''}
+        ${payerDelivery ? `<div class="card-row">${payerDelivery}</div>` : ''}
+        ${linkHtml}
+        ${notesHtml}
+      </div>
+      <div class="card-actions">
+        <button class="btn-edit"   onclick="editItem('${item.id}')">✏️ עריכה</button>
+        <button class="btn-delete" onclick="confirmDeleteItem('${item.id}')">🗑️ מחק</button>
+      </div>
+    </div>`;
+}
+
+// ── ITEM MODAL ──
+function openItemModal(id) {
+  editingItemId = id || null;
+  const modal = document.getElementById('item-modal-overlay');
+  document.getElementById('item-modal-title').textContent = id ? 'עריכת פריט' : 'הוסף פריט חדש';
+
+  if (id) {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    document.getElementById('f-title').value       = item.title || '';
+    document.getElementById('f-room').value        = item.room || '';
+    document.getElementById('f-priority').value    = item.priority || '';
+    document.getElementById('f-length').value      = item.length || '';
+    document.getElementById('f-width').value       = item.width || '';
+    document.getElementById('f-height').value      = item.height || '';
+    document.getElementById('f-est-price').value   = item.estPrice || '';
+    document.getElementById('f-act-price').value   = item.actualPrice || '';
+    document.getElementById('f-payer').value       = item.payer || '';
+    document.getElementById('f-status').value      = item.status || '';
+    document.getElementById('f-link').value        = item.storeLink || '';
+    document.getElementById('f-image').value       = item.imageUrl || '';
+    document.getElementById('f-delivery').value    = item.deliveryDate || '';
+    document.getElementById('f-notes').value       = item.notes || '';
+  } else {
+    document.getElementById('item-form').reset();
+  }
+  modal.classList.add('open');
+}
+
+function closeItemModal() {
+  document.getElementById('item-modal-overlay').classList.remove('open');
+  editingItemId = null;
+}
+
+function editItem(id) {
+  openItemModal(id);
+}
+
+function saveItem() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { showToast('יש להזין כותרת לפריט'); return; }
+
+  const item = {
+    id:           editingItemId || genId(),
+    title,
+    room:         document.getElementById('f-room').value,
+    priority:     document.getElementById('f-priority').value,
+    length:       document.getElementById('f-length').value,
+    width:        document.getElementById('f-width').value,
+    height:       document.getElementById('f-height').value,
+    estPrice:     document.getElementById('f-est-price').value,
+    actualPrice:  document.getElementById('f-act-price').value,
+    payer:        document.getElementById('f-payer').value,
+    status:       document.getElementById('f-status').value,
+    storeLink:    document.getElementById('f-link').value.trim(),
+    imageUrl:     document.getElementById('f-image').value.trim(),
+    deliveryDate: document.getElementById('f-delivery').value,
+    notes:        document.getElementById('f-notes').value.trim(),
+  };
+
+  if (editingItemId) {
+    const idx = items.findIndex(i => i.id === editingItemId);
+    if (idx > -1) items[idx] = item;
+    showToast('הפריט עודכן בהצלחה ✓');
+  } else {
+    items.push(item);
+    showToast('הפריט נוסף בהצלחה ✓');
+  }
+
+  saveItems();
+  closeItemModal();
+  renderItems();
+  renderDashboard();
+}
+
+function confirmDeleteItem(id) {
+  openConfirm('האם אתה בטוח שברצונך למחוק פריט זה?', () => {
+    items = items.filter(i => i.id !== id);
+    saveItems();
+    renderItems();
+    renderDashboard();
+    showToast('הפריט נמחק');
+  });
+}
+
+// ═══════════════════════════════════
+//  MEASUREMENTS
+// ═══════════════════════════════════
+function renderMeasurements() {
+  const tbody = document.getElementById('meas-tbody');
+  const empty = document.getElementById('meas-empty');
+  const table = document.getElementById('meas-table');
+
+  if (measurements.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  table.style.display = '';
+  empty.style.display = 'none';
+
+  tbody.innerHTML = measurements.map(m => `
+    <tr>
+      <td><b>${escHtml(m.name)}</b></td>
+      <td>${m.length || '—'}</td>
+      <td>${m.width  || '—'}</td>
+      <td>${m.height || '—'}</td>
+      <td>${escHtml(m.notes || '')}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-sm btn-sm-edit"   onclick="editMeasurement('${m.id}')">עריכה</button>
+        <button class="btn-sm btn-sm-delete" onclick="confirmDeleteMeas('${m.id}')">מחק</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openMeasModal(id) {
+  editingMeasId = id || null;
+  document.getElementById('meas-modal-title').textContent = id ? 'עריכת מידה' : 'הוסף מידה';
+
+  if (id) {
+    const m = measurements.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('m-name').value   = m.name   || '';
+    document.getElementById('m-length').value = m.length || '';
+    document.getElementById('m-width').value  = m.width  || '';
+    document.getElementById('m-height').value = m.height || '';
+    document.getElementById('m-notes').value  = m.notes  || '';
+  } else {
+    document.getElementById('meas-form').reset();
+  }
+  document.getElementById('meas-modal-overlay').classList.add('open');
+}
+
+function closeMeasModal() {
+  document.getElementById('meas-modal-overlay').classList.remove('open');
+  editingMeasId = null;
+}
+
+function editMeasurement(id) { openMeasModal(id); }
+
+function saveMeasurement() {
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { showToast('יש להזין שם'); return; }
+
+  const m = {
+    id:     editingMeasId || genId(),
+    name,
+    length: document.getElementById('m-length').value,
+    width:  document.getElementById('m-width').value,
+    height: document.getElementById('m-height').value,
+    notes:  document.getElementById('m-notes').value.trim(),
+  };
+
+  if (editingMeasId) {
+    const idx = measurements.findIndex(x => x.id === editingMeasId);
+    if (idx > -1) measurements[idx] = m;
+    showToast('המידה עודכנה ✓');
+  } else {
+    measurements.push(m);
+    showToast('המידה נוספה ✓');
+  }
+
+  saveMeasurements();
+  closeMeasModal();
+  renderMeasurements();
+}
+
+function confirmDeleteMeas(id) {
+  openConfirm('האם אתה בטוח שברצונך למחוק מידה זו?', () => {
+    measurements = measurements.filter(m => m.id !== id);
+    saveMeasurements();
+    renderMeasurements();
+    showToast('המידה נמחקה');
+  });
+}
+
+// ═══════════════════════════════════
+//  SUGGESTIONS
+// ═══════════════════════════════════
+const SUGGESTIONS = [
+  { room: 'סלון', name: 'ספה', estPrice: 6000, priority: 'חייב להיות', priceLabel: '4,000–8,000 ₪' },
+  { room: 'סלון', name: 'שולחן סלון', estPrice: 1400, priority: 'חייב להיות', priceLabel: '800–2,000 ₪' },
+  { room: 'סלון', name: 'מזנון טלוויזיה', estPrice: 2100, priority: 'חייב להיות', priceLabel: '1,200–3,000 ₪' },
+  { room: 'סלון', name: 'שטיח', estPrice: 1250, priority: 'נחמד לקבל', priceLabel: '500–2,000 ₪' },
+  { room: 'סלון', name: 'עמדת טלוויזיה', estPrice: 800, priority: 'נחמד לקבל', priceLabel: '400–1,200 ₪' },
+  { room: 'חדר שינה', name: 'מיטה זוגית', estPrice: 4500, priority: 'חייב להיות', priceLabel: '3,000–6,000 ₪' },
+  { room: 'חדר שינה', name: 'ארון בגדים', estPrice: 3500, priority: 'חייב להיות', priceLabel: '2,000–5,000 ₪' },
+  { room: 'חדר שינה', name: 'שידות לילה x2', estPrice: 1050, priority: 'נחמד לקבל', priceLabel: '600–1,500 ₪' },
+  { room: 'חדר שינה', name: 'מנורות לילה x2', estPrice: 550, priority: 'נחמד לקבל', priceLabel: '300–800 ₪' },
+  { room: 'מטבח', name: 'שולחן אוכל', estPrice: 2500, priority: 'חייב להיות', priceLabel: '1,500–3,500 ₪' },
+  { room: 'מטבח', name: 'כיסאות x4', estPrice: 1400, priority: 'חייב להיות', priceLabel: '200–500 ₪ כ״א' },
+  { room: 'מטבח', name: 'עגלת מטבח', estPrice: 550, priority: 'נחמד לקבל', priceLabel: '300–800 ₪' },
+  { room: 'משרד', name: 'שולחן עבודה', estPrice: 1650, priority: 'חייב להיות', priceLabel: '800–2,500 ₪' },
+  { room: 'משרד', name: 'כיסא מחשב', estPrice: 1300, priority: 'חייב להיות', priceLabel: '600–2,000 ₪' },
+  { room: 'משרד', name: 'מדף ספרים', estPrice: 1000, priority: 'נחמד לקבל', priceLabel: '500–1,500 ₪' },
+  { room: 'מסדרון', name: 'שידת מסדרון', estPrice: 1050, priority: 'נחמד לקבל', priceLabel: '600–1,500 ₪' },
+  { room: 'מסדרון', name: 'ראי', estPrice: 400, priority: 'נחמד לקבל', priceLabel: '200–600 ₪' },
+  { room: 'מסדרון', name: 'קולב בגדים', estPrice: 350, priority: 'נחמד לקבל', priceLabel: '200–500 ₪' },
+  { room: 'מרפסת', name: 'שולחן חוץ', estPrice: 1000, priority: 'נחמד לקבל', priceLabel: '500–1,500 ₪' },
+  { room: 'מרפסת', name: 'כיסאות חוץ x2', estPrice: 1100, priority: 'נחמד לקבל', priceLabel: '300–800 ₪ כ״א' },
+  { room: 'חדר אמבטיה ראשי', name: 'ארון אמבטיה', estPrice: 1400, priority: 'חייב להיות', priceLabel: '800–2,000 ₪' },
+  { room: 'חדר אמבטיה ראשי', name: 'מראה', estPrice: 550, priority: 'חייב להיות', priceLabel: '300–800 ₪' },
+  { room: 'חדר אמבטיה שני', name: 'ארון אמבטיה', estPrice: 1000, priority: 'נחמד לקבל', priceLabel: '500–1,500 ₪' },
+  { room: 'חדר אמבטיה שני', name: 'מראה', estPrice: 400, priority: 'נחמד לקבל', priceLabel: '200–600 ₪' },
+];
+
+const ROOM_ICONS = {
+  'סלון': '🛋️',
+  'חדר שינה': '🛏️',
+  'מטבח': '🍽️',
+  'משרד': '💻',
+  'מסדרון': '🚪',
+  'מרפסת': '🌿',
+  'חדר אמבטיה ראשי': '🛁',
+  'חדר אמבטיה שני': '🚿',
+};
+
+function isAlreadyAdded(name, room) {
+  return items.some(i => i.title === name && i.room === room);
+}
+
+function renderSuggestions() {
+  const rooms = [...new Set(SUGGESTIONS.map(s => s.room))];
+  const container = document.getElementById('suggestions-container');
+  container.innerHTML = rooms.map(room => {
+    const roomSugg = SUGGESTIONS.filter(s => s.room === room);
+    const icon = ROOM_ICONS[room] || '🏠';
+    return `
+      <div class="room-section">
+        <h3>${icon} ${room}</h3>
+        <div class="sugg-cards">
+          ${roomSugg.map(s => {
+            const added = isAlreadyAdded(s.name, s.room);
+            return `
+            <div class="sugg-card">
+              <div class="sugg-name">${escHtml(s.name)}</div>
+              <div class="sugg-price">${s.priceLabel}</div>
+              <div class="sugg-priority">${s.priority}</div>
+              <button class="btn-add-sugg"
+                id="sugg-btn-${sugKey(s)}"
+                onclick="addSuggestion(${escAttr(JSON.stringify(s))})"
+                ${added ? 'disabled' : ''}>
+                ${added ? '✓ נוסף' : '+ הוסף לרשימה'}
+              </button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function sugKey(s) {
+  return btoa(unescape(encodeURIComponent(s.name + s.room))).replace(/[^a-z0-9]/gi, '');
+}
+
+function addSuggestion(s) {
+  if (isAlreadyAdded(s.name, s.room)) return;
+  items.push({
+    id:           genId(),
+    title:        s.name,
+    room:         s.room,
+    priority:     s.priority,
+    estPrice:     s.estPrice,
+    actualPrice:  '',
+    payer:        '',
+    status:       'לקנייה',
+    storeLink:    '',
+    imageUrl:     '',
+    deliveryDate: '',
+    notes:        '',
+    length: '', width: '', height: '',
+  });
+  saveItems();
+  renderDashboard();
+  renderSuggestions();
+  showToast(`"${s.name}" נוסף לרשימת הקנייה ✓`);
+}
+
+// ═══════════════════════════════════
+//  CONFIRM DIALOG
+// ═══════════════════════════════════
+let confirmCallback = null;
+
+function openConfirm(msg, cb) {
+  document.getElementById('confirm-msg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  confirmCallback = null;
+}
+
+document.getElementById('confirm-yes').addEventListener('click', () => {
+  if (confirmCallback) confirmCallback();
+  closeConfirm();
+});
+
+// ═══════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ═══════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function escAttr(str) {
+  return str.replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+}
+
+// Close modals on overlay click
+document.getElementById('item-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeItemModal();
+});
+document.getElementById('meas-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeMeasModal();
+});
+document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+// Keyboard: Escape closes modals
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeItemModal();
+    closeMeasModal();
+    closeConfirm();
+  }
+});
+
+// ═══════════════════════════════════
+//  INIT
+// ═══════════════════════════════════
+loadData();
+renderDashboard();
+renderItems();
+</script>
+</body>
+</html>
