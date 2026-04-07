@@ -12,6 +12,8 @@ Mobile Focus: The design must be optimized for mobile devices (utilizing Flex/Gr
 
 Color Palette: Strictly adhere to the Teal, Mint, and White color tones defined in the :root CSS variables.
 
+Design Preservation: Always maintain the existing modern design language — including card shadows, rounded corners, gradient accents, smooth transitions, and overall visual hierarchy. Any new component or change must feel native to the current design, not foreign to it.
+
 📈 Data & Math Analyst
 Role: Responsible for dashboard logic, mathematical calculations, and filtering systems.
 
