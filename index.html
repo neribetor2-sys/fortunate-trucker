@@ -121,10 +121,8 @@
         <p style="margin-top:8px; color:var(--text-muted); font-size:14px;">⚡ סה"כ הוצאות על מוצרי חשמל: <b id="spend-appliances" style="color:var(--text);">0 ₪</b></p>
     </div>
 
-    <div class="dash-section" id="section-savings"></div>
     <div class="dash-section" id="section-cat-spend"></div>
     <div class="dash-section" id="section-room-progress"></div>
-    <div class="dash-section" id="section-priority-alert"></div>
   </div>
 
   <div class="tab-pane" id="tab-items">
@@ -245,41 +243,8 @@ function renderDashboard() {
     document.getElementById('spend-noa').textContent = fmtPrice(noa);
     document.getElementById('spend-appliances').textContent = fmtPrice(appliances);
     renderDonut();
-    renderSavings();
     renderCategorySpend();
     renderRoomProgress();
-    renderPriorityAlert();
-}
-
-function renderSavings() {
-    const active = items.filter(i => i.status === 'הוזמן' || i.status === 'סופק');
-    const totalEst = active.reduce((s, i) => s + (parseFloat(i.estPrice) || 0), 0);
-    const totalAct = active.reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
-    const savings = totalEst - totalAct;
-    const el = document.getElementById('section-savings');
-    if (active.length === 0) {
-        el.innerHTML = `<h3>💰 סה״כ חיסכון</h3><p style="color:var(--text-muted);font-size:13px;">אין עדיין פריטים שהוזמנו או סופקו לחישוב חיסכון.</p>`;
-        return;
-    }
-    const isPositive = savings >= 0;
-    const color = isPositive ? '#16a34a' : '#dc2626';
-    const bg = isPositive ? '#dcfce7' : '#fee2e2';
-    const label = isPositive ? '✅ חסכתם עד כה' : '⚠️ חריגה מתקציב';
-    el.innerHTML = `
-        <h3>💰 סה״כ חיסכון</h3>
-        <div class="savings-box">
-            <div>
-                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${label}</div>
-                <div class="savings-amount" style="color:${color};">${fmtPrice(Math.abs(savings))}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">מבוסס על ${active.length} פריטים שהוזמנו / סופקו</div>
-            </div>
-            <div style="background:${bg};border-radius:12px;padding:12px 16px;text-align:center;">
-                <div style="font-size:11px;color:var(--text-muted);">משוער</div>
-                <div style="font-weight:700;font-size:15px;">${fmtPrice(totalEst)}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">בפועל</div>
-                <div style="font-weight:700;font-size:15px;color:${color};">${fmtPrice(totalAct)}</div>
-            </div>
-        </div>`;
 }
 
 function renderCategorySpend() {
@@ -323,23 +288,6 @@ function renderRoomProgress() {
         </div>`;
     }).join('');
     el.innerHTML = `<h3>🏠 התקדמות לפי חדר</h3>${rows || '<p style="color:var(--text-muted);font-size:13px;">אין עדיין פריטים.</p>'}`;
-}
-
-function renderPriorityAlert() {
-    const mustHaves = items.filter(i => i.priority === 'חייב להיות' && i.status === 'לקנייה').slice(0, 5);
-    const el = document.getElementById('section-priority-alert');
-    if (mustHaves.length === 0) {
-        el.innerHTML = `<h3>🚨 פריטי חובה שטרם נרכשו</h3><p style="color:#16a34a;font-size:13px;font-weight:600;">✅ כל פריטי החובה נרכשו! כל הכבוד!</p>`;
-        return;
-    }
-    const rows = mustHaves.map(i => `
-        <div class="priority-item">
-            <span style="font-size:20px;">${getCategoryEmoji(i.category)}</span>
-            <span style="font-size:16px;">${getRoomEmoji(i.room)}</span>
-            <span class="priority-item-name">${i.title}</span>
-            <span class="tag tag-room" style="font-size:10px;">${i.room}</span>
-        </div>`).join('');
-    el.innerHTML = `<h3>🚨 פריטי חובה שטרם נרכשו <span style="background:#fee2e2;color:#dc2626;font-size:12px;padding:2px 8px;border-radius:10px;font-weight:700;">${mustHaves.length}</span></h3>${rows}`;
 }
 
 function renderDonut() {
