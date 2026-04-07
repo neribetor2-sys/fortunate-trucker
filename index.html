@@ -274,25 +274,13 @@ function renderDonut() {
     svg.innerHTML = paths;
 }
 
-const roomEmoji = {
-    'חדר שינה': '🛏️',
-    'משרד': '🖥️',
-    'חדר שירותים מאסטר': '🛁',
-    'חדר שירותים נפרד': '🚿',
-    'מסדרון': '🚪',
-    'סלון': '🛋️',
-    'מרפסת': '🪴',
-    'מטבח': '🍳',
-};
+function getRoomEmoji(room) {
+    return { 'חדר שינה': '🛏️', 'משרד': '🖥️', 'חדר שירותים מאסטר': '🛁', 'חדר שירותים נפרד': '🚿', 'מסדרון': '🚪', 'סלון': '🛋️', 'מרפסת': '🪴', 'מטבח': '🍳' }[room] || '🏠';
+}
 
-const categoryEmoji = {
-    'ריהוט': '🛋️',
-    'מוצרי חשמל': '⚡',
-    'טקסטיל': '🧶',
-    'תאורה': '💡',
-    'אקססוריז': '🖼️',
-    'תחזוקה/גינון': '🛠️',
-};
+function getCategoryEmoji(category) {
+    return { 'ריהוט': '🛋️', 'מוצרי חשמל': '⚡', 'טקסטיל': '🧶', 'תאורה': '💡', 'אקססוריז': '🖼️', 'תחזוקה/גינון': '🛠️' }[category] || '📦';
+}
 
 function renderItems() {
     const grid = document.getElementById('items-grid');
@@ -307,11 +295,11 @@ function renderItems() {
     );
     grid.innerHTML = filtered.map(i => `
         <div class="item-card">
-            ${i.imageUrl ? `<img src="${i.imageUrl}" class="card-img">` : `<div class="card-img-placeholder">${categoryEmoji[i.category] || roomEmoji[i.room] || '🏠'}</div>`}
+            ${i.imageUrl ? `<img src="${i.imageUrl}" class="card-img">` : `<div class="card-img-placeholder"><span style="font-size:36px;">${getCategoryEmoji(i.category)}</span><span style="font-size:22px; margin-right:4px; opacity:0.7;">${getRoomEmoji(i.room)}</span></div>`}
             <div class="card-body">
-                <div class="card-title">${i.title}</div>
-                <span class="tag tag-room">${i.room}</span>
-                <span class="tag tag-category">${categoryEmoji[i.category] || ''} ${i.category || 'ריהוט'}</span>
+                <div class="card-title">${getCategoryEmoji(i.category)} ${getRoomEmoji(i.room)} ${i.title}</div>
+                <span class="tag tag-room">${getRoomEmoji(i.room)} ${i.room}</span>
+                <span class="tag tag-category">${getCategoryEmoji(i.category)} ${i.category || 'ריהוט'}</span>
                 <span class="tag tag-status-${i.status}">${i.status}</span>
                 <div style="margin-top:10px; font-weight:bold;">${fmtPrice(i.actualPrice)}</div>
             </div>
