@@ -49,6 +49,10 @@
     .btn-save { background: var(--primary); color: #fff; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px; }
     #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 20px; display: none; z-index: 2000; }
     #toast.show { display: block; }
+    .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .legend-label { flex: 1; font-size: 14px; color: var(--text); }
+    .legend-count { font-weight: 700; font-size: 14px; background: var(--surface2); padding: 2px 8px; border-radius: 10px; min-width: 28px; text-align: center; }
   </style>
 </head>
 <body>
@@ -68,6 +72,30 @@
       <div class="stat-card"><div class="stat-label">סה"כ פריטים</div><div class="stat-value" id="stat-total">0</div></div>
       <div class="stat-card"><div class="stat-label">שולם עד כה</div><div class="stat-value" id="stat-spent">0 ₪</div></div>
       <div class="stat-card"><div class="stat-label">צפי להשלמה</div><div class="stat-value" id="stat-projected">0 ₪</div></div>
+    </div>
+    <div style="background:#fff; padding:20px; border-radius:12px; margin-top:10px;">
+      <h3 style="margin:0 0 16px;">מסע הרכישה שלנו</h3>
+      <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+        <svg id="donut-svg" width="140" height="140" viewBox="0 0 140 140" style="flex-shrink:0; direction:ltr;"></svg>
+        <div style="flex:1; min-width:140px;">
+          <div class="legend-row" id="legend-tobuy">
+            <span class="legend-dot" style="background:#94a3b8;"></span>
+            <span class="legend-label">לקנייה</span>
+            <span class="legend-count" id="legend-count-tobuy">0</span>
+          </div>
+          <div class="legend-row" id="legend-ordered">
+            <span class="legend-dot" style="background:#f97316;"></span>
+            <span class="legend-label">הוזמן</span>
+            <span class="legend-count" id="legend-count-ordered">0</span>
+          </div>
+          <div class="legend-row" id="legend-delivered">
+            <span class="legend-dot" style="background:#22c55e;"></span>
+            <span class="legend-label">סופק</span>
+            <span class="legend-count" id="legend-count-delivered">0</span>
+          </div>
+          <div id="donut-empty-msg" style="color:var(--text-muted);font-size:13px;display:none;">עוד אין פריטים</div>
+        </div>
+      </div>
     </div>
     <div style="background:#fff; padding:15px; border-radius:12px; margin-top:10px;">
         <h3>חלוקת תשלומים</h3>
@@ -168,6 +196,58 @@ function renderDashboard() {
     document.getElementById('stat-projected').textContent = fmtPrice(projected);
     document.getElementById('spend-neri').textContent = fmtPrice(neri);
     document.getElementById('spend-noa').textContent = fmtPrice(noa);
+    renderDonut();
+}
+
+function renderDonut() {
+    const toBuy = items.filter(i => i.status === 'לקנייה').length;
+    const ordered = items.filter(i => i.status === 'הוזמן').length;
+    const delivered = items.filter(i => i.status === 'סופק').length;
+    const total = toBuy + ordered + delivered;
+
+    document.getElementById('legend-count-tobuy').textContent = toBuy;
+    document.getElementById('legend-count-ordered').textContent = ordered;
+    document.getElementById('legend-count-delivered').textContent = delivered;
+
+    const svg = document.getElementById('donut-svg');
+    const emptyMsg = document.getElementById('donut-empty-msg');
+
+    if (total === 0) {
+        svg.innerHTML = '';
+        emptyMsg.style.display = 'block';
+        return;
+    }
+    emptyMsg.style.display = 'none';
+
+    const cx = 70, cy = 70, r = 54, strokeW = 22;
+    const circ = 2 * Math.PI * r;
+    const segments = [
+        { count: toBuy,    color: '#94a3b8' },
+        { count: ordered,  color: '#f97316' },
+        { count: delivered, color: '#22c55e' },
+    ];
+
+    let offset = 0;
+    const gap = total > 1 ? 2 : 0;
+    let paths = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#f1f5f9" stroke-width="${strokeW}"/>`;
+
+    segments.forEach(seg => {
+        if (seg.count === 0) return;
+        const dash = (seg.count / total) * circ - gap;
+        paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+            stroke="${seg.color}" stroke-width="${strokeW}"
+            stroke-dasharray="${dash} ${circ - dash}"
+            stroke-dashoffset="${-offset}"
+            transform="rotate(-90 ${cx} ${cy})"
+            style="transition: stroke-dasharray .4s ease"/>`;
+        offset += (seg.count / total) * circ;
+    });
+
+    const pct = total > 0 ? Math.round((delivered / total) * 100) : 0;
+    paths += `<text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="800" fill="#1e293b">${pct}%</text>`;
+    paths += `<text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="11" fill="#64748b">הושלם</text>`;
+
+    svg.innerHTML = paths;
 }
 
 const roomEmoji = {
