@@ -157,16 +157,29 @@ function fmtPrice(n) { return n ? Number(n).toLocaleString() + ' ₪' : '0 ₪';
 
 function renderDashboard() {
     const purchased = items.filter(i => i.status === 'סופק').length;
-    const spent = items.reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
+    const spent = items.filter(i => i.status === 'הוזמן' || i.status === 'סופק').reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
+    const projected = items.filter(i => i.status === 'לקנייה').reduce((s, i) => s + (parseFloat(i.estPrice) || 0), 0);
     const neri = items.filter(i => i.payer === 'neri').reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
     const noa = items.filter(i => i.payer === 'noa').reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
 
     document.getElementById('stat-purchased').textContent = purchased;
     document.getElementById('stat-total').textContent = items.length;
     document.getElementById('stat-spent').textContent = fmtPrice(spent);
+    document.getElementById('stat-projected').textContent = fmtPrice(projected);
     document.getElementById('spend-neri').textContent = fmtPrice(neri);
     document.getElementById('spend-noa').textContent = fmtPrice(noa);
 }
+
+const roomEmoji = {
+    'חדר שינה': '🛏️',
+    'משרד': '🖥️',
+    'חדר שירותים מאסטר': '🛁',
+    'חדר שירותים נפרד': '🚿',
+    'מסדרון': '🚪',
+    'סלון': '🛋️',
+    'מרפסת': '🪴',
+    'מטבח': '🍳',
+};
 
 function renderItems() {
     const grid = document.getElementById('items-grid');
@@ -176,7 +189,7 @@ function renderItems() {
     const filtered = items.filter(i => (!fs || i.status === fs) && (!fr || i.room === fr));
     grid.innerHTML = filtered.map(i => `
         <div class="item-card">
-            ${i.imageUrl ? `<img src="${i.imageUrl}" class="card-img">` : `<div class="card-img-placeholder">🛋️</div>`}
+            ${i.imageUrl ? `<img src="${i.imageUrl}" class="card-img">` : `<div class="card-img-placeholder">${roomEmoji[i.room] || '🏠'}</div>`}
             <div class="card-body">
                 <div class="card-title">${i.title}</div>
                 <span class="tag tag-room">${i.room}</span>
