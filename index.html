@@ -35,6 +35,7 @@
     .card-title { font-weight: 700; font-size: 18px; margin-bottom: 8px; }
     .tag { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-left: 4px; }
     .tag-room { background: #ede9fe; color: #6d28d9; }
+    .tag-category { background: #fef9c3; color: #854d0e; }
     .tag-status-לקנייה { background: var(--blue-light); color: var(--blue); }
     .tag-status-הוזמן { background: var(--warning-light); color: var(--warning); }
     .tag-status-סופק { background: var(--success-light); color: #15803d; }
@@ -100,6 +101,7 @@
     <div style="background:#fff; padding:15px; border-radius:12px; margin-top:10px;">
         <h3>חלוקת תשלומים</h3>
         <p>נרי: <b id="spend-neri">0 ₪</b> | נועה: <b id="spend-noa">0 ₪</b> | משותף: <b id="spend-shared">0 ₪</b></p>
+        <p style="margin-top:8px; color:var(--text-muted); font-size:14px;">⚡ סה"כ הוצאות על מוצרי חשמל: <b id="spend-appliances" style="color:var(--text);">0 ₪</b></p>
     </div>
   </div>
 
@@ -108,9 +110,9 @@
         <h2 id="items-count-label">פריטים</h2>
         <button class="btn-save" style="width:auto;" onclick="openItemModal()">+ הוסף פריט</button>
     </div>
-    <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <select id="filter-status"><option value="">כל הסטטוסים</option><option>לקנייה</option><option>הוזמן</option><option>סופק</option></select>
-        <select id="filter-room">
+    <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+        <select id="filter-status" style="flex:1; min-width:100px;"><option value="">כל הסטטוסים</option><option>לקנייה</option><option>הוזמן</option><option>סופק</option></select>
+        <select id="filter-room" style="flex:1; min-width:100px;">
           <option value="">כל החדרים</option>
           <option>מרפסת</option>
           <option>חדר שינה</option>
@@ -119,6 +121,15 @@
           <option>משרד</option>
           <option>חדר שירותים מאסטר</option>
           <option>חדר שירותים נפרד</option>
+        </select>
+        <select id="filter-category" style="flex:1; min-width:100px;">
+          <option value="">כל הסוגים</option>
+          <option>ריהוט</option>
+          <option>מוצרי חשמל</option>
+          <option>טקסטיל</option>
+          <option>תאורה</option>
+          <option>אקססוריז</option>
+          <option>תחזוקה/גינון</option>
         </select>
     </div>
     <div class="cards-grid" id="items-grid"></div>
@@ -140,6 +151,14 @@
           <option>חדר שירותים נפרד</option>
         </select>
         <select id="f-status"><option>לקנייה</option><option>הוזמן</option><option>סופק</option></select>
+        <select id="f-category">
+          <option>ריהוט</option>
+          <option>מוצרי חשמל</option>
+          <option>טקסטיל</option>
+          <option>תאורה</option>
+          <option>אקססוריז</option>
+          <option>תחזוקה/גינון</option>
+        </select>
         <select id="f-priority"><option>חייב להיות</option><option>נחמד לקבל</option></select>
         <input type="number" id="f-est-price" placeholder="מחיר משוער" />
         <input type="number" id="f-act-price" placeholder="מחיר בפועל (אם נקנה)" />
@@ -175,7 +194,10 @@ let editingItemId = null;
 
 // LISTENERS
 db.collection("items").onSnapshot(snap => {
-    items = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    items = snap.docs.map(doc => {
+        const data = doc.data();
+        return {id: doc.id, ...data, category: data.category || 'ריהוט'};
+    });
     renderItems();
     renderDashboard();
 });
@@ -189,6 +211,7 @@ function renderDashboard() {
     const projected = items.filter(i => i.status === 'לקנייה').reduce((s, i) => s + (parseFloat(i.estPrice) || 0), 0);
     const neri = items.filter(i => i.payer === 'neri').reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
     const noa = items.filter(i => i.payer === 'noa').reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
+    const appliances = items.filter(i => i.category === 'מוצרי חשמל').reduce((s, i) => s + (parseFloat(i.actualPrice) || 0), 0);
 
     document.getElementById('stat-purchased').textContent = purchased;
     document.getElementById('stat-total').textContent = items.length;
@@ -196,6 +219,7 @@ function renderDashboard() {
     document.getElementById('stat-projected').textContent = fmtPrice(projected);
     document.getElementById('spend-neri').textContent = fmtPrice(neri);
     document.getElementById('spend-noa').textContent = fmtPrice(noa);
+    document.getElementById('spend-appliances').textContent = fmtPrice(appliances);
     renderDonut();
 }
 
@@ -261,18 +285,33 @@ const roomEmoji = {
     'מטבח': '🍳',
 };
 
+const categoryEmoji = {
+    'ריהוט': '🛋️',
+    'מוצרי חשמל': '⚡',
+    'טקסטיל': '🧶',
+    'תאורה': '💡',
+    'אקססוריז': '🖼️',
+    'תחזוקה/גינון': '🛠️',
+};
+
 function renderItems() {
     const grid = document.getElementById('items-grid');
     const fs = document.getElementById('filter-status').value;
     const fr = document.getElementById('filter-room').value;
+    const fc = document.getElementById('filter-category').value;
 
-    const filtered = items.filter(i => (!fs || i.status === fs) && (!fr || i.room === fr));
+    const filtered = items.filter(i =>
+        (!fs || i.status === fs) &&
+        (!fr || i.room === fr) &&
+        (!fc || i.category === fc)
+    );
     grid.innerHTML = filtered.map(i => `
         <div class="item-card">
-            ${i.imageUrl ? `<img src="${i.imageUrl}" class="card-img">` : `<div class="card-img-placeholder">${roomEmoji[i.room] || '🏠'}</div>`}
+            ${i.imageUrl ? `<img src="${i.imageUrl}" class="card-img">` : `<div class="card-img-placeholder">${categoryEmoji[i.category] || roomEmoji[i.room] || '🏠'}</div>`}
             <div class="card-body">
                 <div class="card-title">${i.title}</div>
                 <span class="tag tag-room">${i.room}</span>
+                <span class="tag tag-category">${categoryEmoji[i.category] || ''} ${i.category || 'ריהוט'}</span>
                 <span class="tag tag-status-${i.status}">${i.status}</span>
                 <div style="margin-top:10px; font-weight:bold;">${fmtPrice(i.actualPrice)}</div>
             </div>
@@ -290,6 +329,7 @@ async function saveItem() {
         title: document.getElementById('f-title').value,
         room: document.getElementById('f-room').value,
         status: document.getElementById('f-status').value,
+        category: document.getElementById('f-category').value,
         actualPrice: document.getElementById('f-act-price').value,
         estPrice: document.getElementById('f-est-price').value,
         payer: document.getElementById('f-payer').value,
@@ -307,8 +347,25 @@ function openItemModal(id) {
     if(id) {
         const i = items.find(x => x.id === id);
         document.getElementById('f-title').value = i.title || '';
+        document.getElementById('f-room').value = i.room || 'מרפסת';
+        document.getElementById('f-status').value = i.status || 'לקנייה';
+        document.getElementById('f-category').value = i.category || 'ריהוט';
+        document.getElementById('f-est-price').value = i.estPrice || '';
         document.getElementById('f-act-price').value = i.actualPrice || '';
-    } else { document.getElementById('item-modal-overlay').querySelector('form')?.reset(); }
+        document.getElementById('f-payer').value = i.payer || '';
+        document.getElementById('f-image').value = i.imageUrl || '';
+        document.getElementById('f-notes').value = i.notes || '';
+    } else {
+        document.getElementById('f-title').value = '';
+        document.getElementById('f-room').value = 'מרפסת';
+        document.getElementById('f-status').value = 'לקנייה';
+        document.getElementById('f-category').value = 'ריהוט';
+        document.getElementById('f-est-price').value = '';
+        document.getElementById('f-act-price').value = '';
+        document.getElementById('f-payer').value = '';
+        document.getElementById('f-image').value = '';
+        document.getElementById('f-notes').value = '';
+    }
     document.getElementById('item-modal-overlay').classList.add('open');
 }
 function closeItemModal() { document.getElementById('item-modal-overlay').classList.remove('open'); }
@@ -324,6 +381,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 
 document.getElementById('filter-status').addEventListener('change', renderItems);
 document.getElementById('filter-room').addEventListener('change', renderItems);
+document.getElementById('filter-category').addEventListener('change', renderItems);
 </script>
 </body>
 </html>
